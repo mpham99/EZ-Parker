@@ -6,17 +6,27 @@
 //
 
 import FirebaseFirestore
+import Combine
+import Foundation
+import MapKit
 
-class LocationViewModel: ObservableObject {
+class LocationViewModel: NSObject, ObservableObject {
     @Published var address: String = ""
     @Published var name: String = ""
     @Published var errorMessage: String = ""
     @Published var locations: [Location] = []
+    @Published var autocompleteResults: [String] = []
     
     private let db = Firestore.firestore()
+    private var searchCompleter = MKLocalSearchCompleter()
+    private var cancellables = Set<AnyCancellable>()
+    var isSelected = false
     
-    init() {
+    override init() {
+        super.init()
         fetchLocation()
+        searchCompleter.delegate = self
+        searchCompleter.resultTypes = .address
     }
     
     func saveLocation() {
@@ -49,9 +59,27 @@ class LocationViewModel: ObservableObject {
         }
     }
     
+    func updateSearchResults(for query: String) {
+        if !isSelected {
+            searchCompleter.queryFragment = query
+        } else {
+            isSelected = false
+        }
+    }
+    
     private func clearInputs() {
         self.address = ""
         self.name = ""
         self.errorMessage = ""
+    }
+}
+
+extension LocationViewModel: MKLocalSearchCompleterDelegate {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        self.autocompleteResults = completer.results.map { $0.title }
+    }
+    
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        self.errorMessage = "Error fetching autocomplete results: \(error.localizedDescription)"
     }
 }

@@ -6,15 +6,14 @@
 //
 
 import SwiftUI
-
-import SwiftUI
+import MapKit
 
 struct AddLocationView: View {
     @StateObject private var viewModel = LocationViewModel()
     
     var body: some View {
         VStack() {
-            TextField("Name", text: $viewModel.name)
+            TextField("Level", text: $viewModel.name)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .bold()
                 .padding([.top, .leading, .trailing])
@@ -23,9 +22,27 @@ struct AddLocationView: View {
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .bold()
                 .padding(.horizontal)
+                .onChange(of: viewModel.address) {
+                    viewModel.updateSearchResults(for: viewModel.address)
+                }
+            
+            if !viewModel.autocompleteResults.isEmpty {
+                List(viewModel.autocompleteResults, id: \.self) { result in
+                    Text(result)
+                        .onTapGesture {
+                            viewModel.isSelected = true
+                            viewModel.address = result
+                            viewModel.autocompleteResults = []
+                        }
+                }
+                .frame(maxHeight: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .listStyle(.plain)
+            }
             
             
             Button(action: {
+                viewModel.isSelected = true
                 viewModel.saveLocation()
                 viewModel.fetchLocation()
             }) {
@@ -57,6 +74,7 @@ struct AddLocationView: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 8))
+            .listStyle(.plain)
 
         }
         .padding()
