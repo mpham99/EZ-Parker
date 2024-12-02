@@ -8,7 +8,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct Location: Codable, Identifiable {
+struct Location: Codable, Identifiable, Hashable {
     @DocumentID var id: String?
     var address: String
     var name: String
@@ -18,4 +18,7 @@ struct Location: Codable, Identifiable {
         self.address = address
         self.name = name
     }
+                      
+    public var description: String { return "\(name) - \(address)" }
+
 }
